@@ -1,8 +1,7 @@
 import React, { useState, useRef } from 'react';
 import './App.css'; 
 // @ts-ignore
-import * as cppParser from './grammar/cppParser';
-
+import { parse } from './grammar/cppParser';
 import { SymbolTable } from './analysis/SymbolTable';
 import { performTypeCheck } from './analysis/TypeChecker';
 import { analyzeDataFlow } from './analysis/DataFlow';
@@ -151,7 +150,7 @@ function App() {
 
     try {
       log("1. Starting Lexical & Syntactic Analysis...");
-      const parsedAst = cppParser.parse(code);
+      const parsedAst = parse(code);
       log("✅ Parsing Successful! AST Generated.");
 
       log("2. Running Semantic Safety Checks...");
