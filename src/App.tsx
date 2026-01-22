@@ -230,7 +230,7 @@ function App() {
   return (
     <div className="app-container">
       <header className="header">
-        <h1>Code Sense 🎓</h1>
+        <h1>Code Sense 🎓 (v2)</h1>
         <p>C++ Static Analysis & Visualization Tool</p>
       </header>
 
