@@ -2,14 +2,14 @@
 
 // 1. UPDATED START RULE: Allows headers before main()
 Start
-  = Preamble* main:MainFunction { return main; }
+  = _ pre:Preamble* main:MainFunction { return main; }
 
 // Rules to handle (and ignore) C++ boilerplate
 Preamble
-  = PreprocessorDirective
+  = _ item:(PreprocessorDirective
   / UsingNamespace
   / GlobalVar
-  / Comment
+  / Comment) { return item; }
 
 PreprocessorDirective
   = "#" [^\n]* { return null; } // Matches #include, #define, etc.
@@ -22,12 +22,10 @@ GlobalVar
 
 // 2. The Main Function (The core of your analysis)
 MainFunction
-  = "int" _ "main" _ "(" _ ")" _ "{" _ body:Statement* _ "}" _ {
+  = _ "int" _ "main" _ "(" _ ")" _ "{" _ body:Statement* _ "}" _ {
       // Filter null comments
       const cleanBody = body.filter(s => s !== null);
       
-      // We return a "Program" node containing the code INSIDE main.
-      // This keeps your Analyzer and Visualizer working perfectly!
       return { 
         type: "Program", 
         body: cleanBody 
