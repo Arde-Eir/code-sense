@@ -7,7 +7,7 @@
     "dev": "vite",
     
     "// COMMENT": "👇 THIS LINE IS THE FIX. It builds grammar BEFORE the website.",
-    "build": "npm run build:grammar && tsc && vite build",
+    "build": "npm run build:grammar && vite build",
     
     "lint": "eslint . --ext ts,tsx --report-unused-disable-directives --max-warnings 0",
     "preview": "vite preview",
