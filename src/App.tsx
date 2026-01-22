@@ -79,6 +79,7 @@ const extractTokens = (node: any, tokens: any[] = []) => {
 
   // 7. Literals & Identifiers
   else if (node.type === 'Integer') tokens.push({ type: 'Literal', value: node.value.toString() });
+  else if (node.type === 'Float') tokens.push({ type: 'Literal', value: node.value.toString() }); // <--- NEW LINE ADDED
   else if (node.type === 'String') tokens.push({ type: 'Literal', value: `"${node.value}"` });
   else if (node.type === 'Identifier') tokens.push({ type: 'Identifier', value: node.name });
 

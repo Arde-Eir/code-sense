@@ -49,12 +49,12 @@ function traverse(node: any, symbols: SymbolTable) {
     }
 }
 
-// THIS IS THE PART THAT WAS MISSING OR BROKEN
 function inferType(node: any, symbols: SymbolTable): string {
     if (!node) return 'unknown';
 
     // Match the exact types from your Grammar
     if (node.type === 'Integer') return 'int';
+    if (node.type === 'Float') return 'float'; // <--- NEW LINE ADDED
     if (node.type === 'String') return 'string';
     if (node.type === 'Boolean') return 'bool';
     
@@ -66,14 +66,13 @@ function inferType(node: any, symbols: SymbolTable): string {
     // Handle Math (x + 1)
     if (node.type === 'BinaryExpr') {
         const leftType = inferType(node.left, symbols);
-        const rightType = inferType(node.right, symbols);
         
         // If comparing (>, <, ==), result is bool
         if (['>', '<', '>=', '<=', '==', '!='].includes(node.operator)) {
             return 'bool';
         }
 
-        // If doing math (+, -), result is int (simplified)
+        // If doing math (+, -), result is int/float
         return leftType; 
     }
 

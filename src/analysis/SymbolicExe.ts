@@ -18,31 +18,26 @@ export function checkMathSafety(node: any, constraints: Map<string, number> = ne
     }
 
     // 3. Update known values (Variable Declaration)
-    if (node.type === 'VariableDecl' && node.value && node.value.type === 'Integer') {
-        constraints.set(node.name, node.value.value);
+    if (node.type === 'VariableDecl' && node.value) {
+        if (node.value.type === 'Integer' || node.value.type === 'Float') {
+            constraints.set(node.name, node.value.value);
+        }
     }
     // Handle Assignment updates
-    if (node.type === 'Assignment' && node.value && node.value.type === 'Integer') {
-        constraints.set(node.name, node.value.value);
+   if (node.type === 'Assignment' && node.value) {
+        if (node.value.type === 'Integer' || node.value.type === 'Float') {
+            constraints.set(node.name, node.value.value);
+        }
     }
 
     // 4. CHECK: Division Safety
     if (node.type === 'BinaryExpr' && node.operator === '/') {
         const denominator = node.right;
         
-        // Literal Zero (5 / 0)
-        if (denominator.type === 'Integer' && denominator.value === 0) {
+        // Literal Zero (5 / 0 or 5 / 0.0)
+        if ((denominator.type === 'Integer' || denominator.type === 'Float') && denominator.value === 0) {
              throw new Error(`Math Error at Line ${node.location?.start.line}: Division by Literal Zero.`);
-        }
-
-        // Symbolic Zero (5 / x, where x is 0)
-        if (denominator.type === 'Identifier') {
-            const val = constraints.get(denominator.name);
-            if (val === 0) {
-                throw new Error(`Math Error at Line ${node.location?.start.line}: Division by Zero. Variable '${denominator.name}' is known to be 0.`);
-            }
-        }
-    }
+        }}
 
     // Recurse into children expressions (e.g. for nested math)
     if (node.left) checkMathSafety(node.left, constraints);
