@@ -148,6 +148,7 @@ Term
 
 Factor
   = "(" _ expr:Expression _ ")" { return expr; }
+  / Float
   / Integer
   / Identifier
   / StringLiteral
@@ -176,6 +177,9 @@ BooleanLiteral
 
 StringLiteral
   = '"' chars:[^"]* '"' { return { type: "String", value: chars.join("") }; }
+
+Float "float"
+  = [0-9]+ "." [0-9]+ { return { type: "Float", value: parseFloat(text()) }; }
 
 Identifier "identifier"
   = !Keyword [a-zA-Z_][a-zA-Z0-9_]* { return { type: "Identifier", name: text() }; }
