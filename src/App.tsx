@@ -1,7 +1,7 @@
 import React, { useState, useRef } from 'react';
 import './App.css'; 
 // @ts-ignore
-import { parse } from './grammar/cppParser';
+import * as parserModule from './grammar/cppParser.js';
 import { SymbolTable } from './analysis/SymbolTable';
 import { performTypeCheck } from './analysis/TypeChecker';
 import { analyzeDataFlow } from './analysis/DataFlow';
@@ -148,9 +148,27 @@ function App() {
     const logs: string[] = [];
     const log = (msg: string) => logs.push(msg);
 
+    // --- NEW DEBUG BLOCK ---
+    console.log("Parser Module Loaded:", parserModule);
+    
+    let parseFunction;
+    // Try to find the 'parse' function in the imported module
+    if (parserModule && typeof parserModule.parse === 'function') {
+      parseFunction = parserModule.parse;
+    } else if (parserModule && (parserModule as any).default && typeof (parserModule as any).default.parse === 'function') {
+      parseFunction = (parserModule as any).default.parse;
+    }
+
+    if (!parseFunction) {
+       alert("CRITICAL ERROR: Parser not found!\nThe import failed. Check console for 'parserModule'.");
+       log("❌ Critical Error: Parser import failed.");
+       setConsoleOutput(logs);
+       return;
+    }
+
     try {
       log("1. Starting Lexical & Syntactic Analysis...");
-      const parsedAst = parse(code);
+      const parsedAst = parseFunction(code);
       log("✅ Parsing Successful! AST Generated.");
 
       log("2. Running Semantic Safety Checks...");
