@@ -1,8 +1,7 @@
 // --- C++ Grammar for Code Sense (Real-World Compatible) ---
 
-// 1. UPDATED START RULE: Allows headers before main()
 Start
-  = _ pre:Preamble* main:MainFunction { return main; }
+  = _ Preamble* main:MainFunction { return main; }
 
 // Rules to handle (and ignore) C++ boilerplate
 Preamble
@@ -12,24 +11,19 @@ Preamble
   / Comment) { return item; }
 
 PreprocessorDirective
-  = "#" [^\n]* { return null; } // Matches #include, #define, etc.
+  = "#" [^\n]* { return null; }
 
 UsingNamespace
   = "using" _ "namespace" _ "std" _ ";" { return null; }
 
 GlobalVar
-  = Type _ Identifier _ ";" { return null; } // Simple globals (ignored for scope of thesis)
+  = Type _ Identifier _ ";" { return null; }
 
-// 2. The Main Function (The core of your analysis)
+// 2. The Main Function
 MainFunction
   = _ "int" _ "main" _ "(" _ ")" _ "{" _ body:Statement* _ "}" _ {
-      // Filter null comments
       const cleanBody = body.filter(s => s !== null);
-      
-      return { 
-        type: "Program", 
-        body: cleanBody 
-      }; 
+      return { type: "Program", body: cleanBody }; 
     }
 
 Statement
