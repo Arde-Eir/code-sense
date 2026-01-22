@@ -1,5 +1,6 @@
 // --- C++ Grammar for Code Sense (Real-World Compatible) ---
 
+// 1. UPDATED START RULE: Allows whitespace/newlines at the very start
 Start
   = _ Preamble* main:MainFunction { return main; }
 
@@ -22,8 +23,13 @@ GlobalVar
 // 2. The Main Function
 MainFunction
   = _ "int" _ "main" _ "(" _ ")" _ "{" _ body:Statement* _ "}" _ {
+      // Filter null comments
       const cleanBody = body.filter(s => s !== null);
-      return { type: "Program", body: cleanBody }; 
+      
+      return { 
+        type: "Program", 
+        body: cleanBody 
+      }; 
     }
 
 Statement
@@ -121,8 +127,7 @@ BinaryExpression
           type: "BinaryExpr",
           operator: element[1],
           left: result,
-          right: element[3],
-          location: location() // <--- ADD THIS LINE
+          right: element[3]
         };
       }, head);
     }
@@ -135,7 +140,7 @@ Term
           operator: element[1],
           left: result,
           right: element[3],
-          location: location() // <--- THIS WAS MISSING
+          location: location() // <--- CRITICAL FIX FOR MATH ERROR
         };
       }, head);
     }
@@ -150,7 +155,6 @@ Factor
 
 // --- 5. Lexical Tokens ---
 
-// UPDATED: Supports double, char, long, short, etc.
 Type
   = ("long" _ "long" 
   / "long" 
@@ -178,7 +182,6 @@ Float "float"
 Identifier "identifier"
   = !Keyword [a-zA-Z_][a-zA-Z0-9_]* { return { type: "Identifier", name: text() }; }
 
-// UPDATED: Includes all standard C++ type keywords
 Keyword
   = "int" / "float" / "double" / "char" / "string" / "bool" / "void" 
   / "long" / "short" 

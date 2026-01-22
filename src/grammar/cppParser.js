@@ -262,8 +262,13 @@ function peg$parse(input, options) {
   function peg$f3() {    return null;  }
   function peg$f4() {    return null;  }
   function peg$f5(body) {
+      // Filter null comments
       const cleanBody = body.filter(s => s !== null);
-      return { type: "Program", body: cleanBody }; 
+      
+      return { 
+        type: "Program", 
+        body: cleanBody 
+      }; 
   }
   function peg$f6(stmt) {    return stmt;  }
   function peg$f7(type, name, value) {
@@ -325,8 +330,7 @@ function peg$parse(input, options) {
           type: "BinaryExpr",
           operator: element[1],
           left: result,
-          right: element[3],
-          location: location() // <--- ADD THIS LINE
+          right: element[3]
         };
       }, head);
   }
@@ -337,7 +341,7 @@ function peg$parse(input, options) {
           operator: element[1],
           left: result,
           right: element[3],
-          location: location() // <--- THIS WAS MISSING
+          location: location() // <--- CRITICAL FIX FOR MATH ERROR
         };
       }, head);
   }
