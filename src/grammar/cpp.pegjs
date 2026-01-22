@@ -134,7 +134,8 @@ Term
           type: "BinaryExpr",
           operator: element[1],
           left: result,
-          right: element[3]
+          right: element[3],
+          location: location() // <--- THIS WAS MISSING
         };
       }, head);
     }
