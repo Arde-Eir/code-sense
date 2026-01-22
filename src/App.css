@@ -1,0 +1,220 @@
+/* --- Global Styles --- */
+body { 
+  margin: 0; 
+  font-family: 'Inter', sans-serif; 
+  background-color: #1e1e1e; 
+  color: white; 
+}
+
+.app-container { 
+  height: 100vh; 
+  display: flex; 
+  flex-direction: column; 
+}
+
+/* --- Header --- */
+.header { 
+  padding: 10px 20px; 
+  background: #252526; 
+  border-bottom: 1px solid #333; 
+  display: flex; 
+  align-items: center; 
+  justify-content: space-between; 
+}
+
+.header h1 { 
+  margin: 0; 
+  font-size: 1.2rem; 
+  color: #61dafb; 
+}
+
+/* --- Main Layout --- */
+.main-content { 
+  flex: 1; 
+  display: flex; 
+  overflow: hidden; 
+}
+
+/* --- Editor Panel (Left) --- */
+.editor-panel { 
+  width: 40%; 
+  display: flex; 
+  flex-direction: column; 
+  padding: 10px; 
+  border-right: 1px solid #333; 
+  background: #1e1e1e; 
+}
+
+textarea { 
+  flex: 1; 
+  background: #1e1e1e; 
+  color: #d4d4d4; 
+  border: 1px solid #333; 
+  font-family: 'Fira Code', monospace; 
+  font-size: 14px; 
+  padding: 10px; 
+  resize: none; 
+  outline: none; 
+  
+  /* CRITICAL FOR HIGHLIGHTING LOGIC */
+  line-height: 20px; 
+  white-space: pre; 
+  overflow: auto;
+}
+
+/* 🔥 FORCE HIGHLIGHT VISIBILITY 🔥 */
+textarea::selection {
+  background-color: #007acc; /* Bright Blue */
+  color: white;
+}
+textarea::-moz-selection {
+  background-color: #007acc;
+  color: white;
+}
+
+.analyze-btn { 
+  margin: 10px 0; 
+  padding: 10px; 
+  background: #007acc; 
+  color: white; 
+  border: none; 
+  cursor: pointer; 
+  font-weight: bold; 
+}
+
+.analyze-btn:hover { 
+  background: #005f9e; 
+}
+
+/* --- Logs Panel (Updated for Tabs) --- */
+.logs-panel { 
+  height: 200px; /* Increased slightly for tabs */
+  background: #000; 
+  border-top: 1px solid #333; 
+  /* Flex is handled inline in TSX, but good to have here too */
+  display: flex; 
+  flex-direction: column;
+}
+
+.log-success { color: #4ec9b0; margin-bottom: 4px; }
+.log-error { color: #f44336; margin-bottom: 4px; }
+
+/* --- Visualizer Panel (Right) --- */
+.visualizer-panel { 
+  flex: 1; 
+  display: flex; 
+  flex-direction: column; 
+  background: #2d2d2d; 
+}
+
+.viz-header { 
+  padding: 10px; 
+  background: #252526; 
+  display: flex; 
+  justify-content: space-between; 
+  align-items: center; 
+  border-bottom: 1px solid #333; 
+}
+
+.badge { 
+  background: #ff9800; 
+  color: black; 
+  padding: 2px 8px; 
+  border-radius: 4px; 
+  font-weight: bold; 
+}
+
+.canvas-container { 
+  flex: 1; 
+  position: relative; 
+}
+
+/* --- React Flow Customization --- */
+.react-flow__node { 
+  background: #333; 
+  color: white; 
+  border: 1px solid #555; 
+  padding: 10px; 
+  border-radius: 5px; 
+  font-size: 12px; 
+}
+
+.react-flow__edge-path { 
+  stroke: #61dafb; 
+  stroke-width: 2; 
+}
+
+/* ========================================= */
+/* NEW STYLES FOR DEEP DIVE TABS        */
+/* ========================================= */
+
+/* Tab Navigation Bar */
+.tabs-header {
+  display: flex;
+  background-color: #252526;
+  border-bottom: 1px solid #333;
+}
+
+/* Individual Tab Buttons */
+.tab-btn {
+  background: none;
+  border: none;
+  color: #999;
+  padding: 8px 16px;
+  cursor: pointer;
+  font-family: 'Inter', sans-serif;
+  font-size: 12px;
+  border-right: 1px solid #333;
+  transition: all 0.2s;
+}
+
+.tab-btn:hover {
+  background-color: #2d2d2d;
+  color: white;
+}
+
+/* Active Tab Style */
+.tab-btn.active {
+  background-color: #1e1e1e;
+  color: #4ec9b0; /* Green accent matches logs */
+  border-bottom: 2px solid #4ec9b0;
+  font-weight: bold;
+}
+
+/* Content Area inside the Panel */
+.tab-content {
+  flex: 1;
+  background-color: #1e1e1e;
+  padding: 10px;
+  overflow-y: auto; /* Scroll ONLY the content, not the tabs */
+  font-family: 'Fira Code', monospace;
+  font-size: 12px;
+  color: #d4d4d4;
+}
+
+/* Data Tables (Symbol Table / Math Safety) */
+.data-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.data-table th, .data-table td {
+  text-align: left;
+  padding: 6px 8px;
+  border-bottom: 1px solid #333;
+}
+
+.data-table th { 
+  color: #9cdcfe; /* Light Blue for Headers */
+  font-weight: bold;
+}
+
+.data-table td { 
+  color: #ce9178; /* Orange-ish for values */
+}
+
+/* JSON View (AST) */
+.json-view {
+  white-space: pre-wrap;
+  color: #ce9178;
+}
