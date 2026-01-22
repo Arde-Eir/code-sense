@@ -24,9 +24,17 @@ export function checkMathSafety(node: any, constraints: Map<string, number> = ne
         }
     }
     // Handle Assignment updates
-   if (node.type === 'Assignment' && node.value) {
-        if (node.value.type === 'Integer' || node.value.type === 'Float') {
+    if (node.type === 'Assignment') {
+        // Case 1: Simple Number (e.g., x = 5;)
+        // We know the value, so we track it.
+        if (node.value && (node.value.type === 'Integer' || node.value.type === 'Float')) {
             constraints.set(node.name, node.value.value);
+        } 
+        // Case 2: Complex Expression (e.g., x = x + 1;)
+        // We don't know the new value, so we MUST "forget" the old one (delete from constraints).
+        // This prevents false positives like "Division by Zero" on a variable that changed.
+        else {
+            constraints.delete(node.name);
         }
     }
 
