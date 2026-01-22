@@ -256,19 +256,14 @@ function peg$parse(input, options) {
   const peg$e44 = peg$classExpectation([["a", "z"], ["A", "Z"], ["0", "9"], "_"], false, false, false);
   const peg$e45 = peg$classExpectation([" ", "\t", "\n", "\r"], false, false, false);
 
-  function peg$f0(pre, main) {    return main;  }
+  function peg$f0(main) {    return main;  }
   function peg$f1(item) {    return item;  }
   function peg$f2() {    return null;  }
   function peg$f3() {    return null;  }
   function peg$f4() {    return null;  }
   function peg$f5(body) {
-      // Filter null comments
       const cleanBody = body.filter(s => s !== null);
-      
-      return { 
-        type: "Program", 
-        body: cleanBody 
-      }; 
+      return { type: "Program", body: cleanBody }; 
   }
   function peg$f6(stmt) {    return stmt;  }
   function peg$f7(type, name, value) {
@@ -536,7 +531,7 @@ function peg$parse(input, options) {
     s3 = peg$parseMainFunction();
     if (s3 !== peg$FAILED) {
       peg$savedPos = s0;
-      s0 = peg$f0(s2, s3);
+      s0 = peg$f0(s3);
     } else {
       peg$currPos = s0;
       s0 = peg$FAILED;
