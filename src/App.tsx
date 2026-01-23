@@ -164,6 +164,8 @@ function App() {
   const [mathOps, setMathOps] = useState<any[]>([]);
   const [symbolData, setSymbolData] = useState<any[]>([]);
 
+  const [solvedValues, setSolvedValues] = useState<Map<string, number>>(new Map());
+
   const textAreaRef = useRef<HTMLTextAreaElement>(null);
   const lineNumbersRef = useRef<HTMLDivElement>(null);
 
@@ -226,15 +228,16 @@ function App() {
 
       // 4. UPDATE UI STATE (Do this BEFORE checks that might throw errors)
       setAst(parsedAst);
-      
-      const lexTokens: any[] = [];
-      extractTokens(parsedAst, lexTokens);
-      setTokens(lexTokens);
+setTokens(extractTokens(parsedAst));
+setMathOps(extractMathOps(parsedAst));
+setSymbolData(extractVariables(parsedAst));
 
-      setMathOps(extractMathOps(parsedAst));
-      setSymbolData(extractVariables(parsedAst));
+      // D. MATH SAFETY (Place this last so UI updates even if it fails)
+      const finalValues = checkMathSafety(parsedAst); 
+      setSolvedValues(finalValues); // Store this for the Math Tab!
+      log("✅ Mathematical Safety: No division by zero detected.");
 
-      setActiveTab('lexical');
+setActiveTab('lexical');
       log("3. Generating Control Flow Graph...");
 
       // D. MATH SAFETY (Place this last so UI updates even if it fails)
