@@ -202,12 +202,12 @@ function App() {
     }
 
     try {
-      // 2. PARSING PHASE
+      // 1. PARSING PHASE
       log("1. Starting Lexical & Syntactic Analysis...");
       const parsedAst = parseFunction(code);
       log("✅ Parsing Successful! AST Generated.");
 
-      // 3. ANALYSIS PHASE
+      // --- 3. ANALYSIS PHASE ---
       
       // A. Type Checking
       log("2. Running Semantic Safety Checks...");
@@ -217,19 +217,14 @@ function App() {
 
       // B. Data Flow Analysis
       analyzeDataFlow(parsedAst);
-      log("✅ Data Flow: No uninitialized variables found.");
+      log("✅ Data Flow: Checked.");
 
-      // C. Math Safety (Division by Zero)
-      checkMathSafety(parsedAst); 
-      log("✅ Mathematical Safety: No division by zero detected.");
-
-      // D. Gamification (Score Calculation)
+      // C. Gamification
       const score = calculateScore(parsedAst);
       const rank = getRank(score);
       setGamification({ score, rank });
-      log(`🏆 Gamification: Complexity Score ${score} (Rank ${rank})`);
 
-      // 4. UPDATE UI STATE
+      // 4. UPDATE UI STATE (Do this BEFORE checks that might throw errors)
       setAst(parsedAst);
       
       const lexTokens: any[] = [];
@@ -241,6 +236,10 @@ function App() {
 
       setActiveTab('lexical');
       log("3. Generating Control Flow Graph...");
+
+      // D. MATH SAFETY (Place this last so UI updates even if it fails)
+      checkMathSafety(parsedAst); 
+      log("✅ Mathematical Safety: No division by zero detected.");
 
     } catch (error: any) {
       // SAFE ERROR HANDLING (Prevents UI Freeze)
@@ -339,19 +338,20 @@ function App() {
                     <thead><tr><th>Line</th><th>Operation</th><th>Status</th></tr></thead>
                     <tbody>
                       {mathOps.map((op, i) => {
-                        // STRICT SAFETY CHECK FOR UI
-                        const isZero = op.right == 0 || op.right === "0" || op.right === "0.0";
-                        const isUnsafe = op.op === '/' && isZero;
-                        return (
-                          <tr key={i}>
-                            <td>{op.line}</td>
-                            <td>{op.left} {op.op} {op.right}</td>
-                            <td style={{color: isUnsafe ? '#f44336' : '#4ec9b0', fontWeight: isUnsafe ? 'bold' : 'normal'}}>
-                               {isUnsafe ? '⚠️ UNSAFE' : '✅ SAFE'}
-                            </td>
-                          </tr>
-                        );
-                      })}
+  const isZero = op.right == 0 || op.right === "0" || op.right === "0.0";
+  // Check for BOTH / and % to match your SymbolicExe logic
+  const isUnsafe = (op.op === '/' || op.op === '%') && isZero; 
+  
+  return (
+    <tr key={i}>
+      <td>{op.line}</td>
+      <td>{op.left} {op.op} {op.right}</td>
+      <td style={{color: isUnsafe ? '#f44336' : '#4ec9b0', fontWeight: isUnsafe ? 'bold' : 'normal'}}>
+          {isUnsafe ? '⚠️ UNSAFE' : '✅ SAFE'}
+      </td>
+    </tr>
+  );
+})}
                     </tbody>
                   </table>
                 ) : <div>No math operations detected.</div>
