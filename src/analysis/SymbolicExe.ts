@@ -18,18 +18,26 @@ export function checkMathSafety(node: any, constraints: Map<string, number> = ne
     }
   
     // 3. Update Variables
-    if (node.type === 'VariableDecl' && node.value) {
-        if (node.value.type === 'Integer' || node.value.type === 'Float') {
-            constraints.set(node.name, Number(node.value.value));
-        } else {
-            constraints.delete(node.name);
-        }
-    }
-    if (node.type === 'Assignment') {
-        if (node.value && (node.value.type === 'Integer' || node.value.type === 'Float')) {
-            constraints.set(node.name, Number(node.value.value));
-        } else {
-            constraints.delete(node.name);
+    if (node.type === 'VariableDecl' || node.type === 'Assignment') {
+        const valueNode = node.value;
+        if (valueNode) {
+            // Case A: Assignment to a literal number (e.g., x = 5)
+            if (valueNode.type === 'Integer' || valueNode.type === 'Float') {
+                constraints.set(node.name, Number(valueNode.value));
+            } 
+            // Case B: Assignment to another variable (e.g., b = a)
+            else if (valueNode.type === 'Identifier') {
+                const existingValue = constraints.get(valueNode.name);
+                if (existingValue !== undefined) {
+                    constraints.set(node.name, existingValue);
+                } else {
+                    constraints.delete(node.name);
+                }
+            } 
+            // Case C: Complex expression or unknown (e.g., x = y + 2)
+            else {
+                constraints.delete(node.name);
+            }
         }
     }
   

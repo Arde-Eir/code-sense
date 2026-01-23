@@ -52,27 +52,30 @@ function traverse(node: any, symbols: SymbolTable) {
 function inferType(node: any, symbols: SymbolTable): string {
     if (!node) return 'unknown';
 
-    // Match the exact types from your Grammar
     if (node.type === 'Integer') return 'int';
-    if (node.type === 'Float') return 'float'; // <--- NEW LINE ADDED
+    if (node.type === 'Float') return 'float';
     if (node.type === 'String') return 'string';
     if (node.type === 'Boolean') return 'bool';
     
-    // Look up variables
     if (node.type === 'Identifier') {
         return symbols.lookup(node.name) || 'unknown';
     }
 
-    // Handle Math (x + 1)
     if (node.type === 'BinaryExpr') {
         const leftType = inferType(node.left, symbols);
+        const rightType = inferType(node.right, symbols); // Get right type
         
-        // If comparing (>, <, ==), result is bool
+        // Boolean operations always return bool
         if (['>', '<', '>=', '<=', '==', '!='].includes(node.operator)) {
             return 'bool';
         }
 
-        // If doing math (+, -), result is int/float
+        // Math operations: Promote to float if either side is float
+        if (leftType === 'float' || rightType === 'float') {
+            return 'float';
+        }
+
+        // Otherwise, default to the left type (e.g., int + int = int)
         return leftType; 
     }
 
