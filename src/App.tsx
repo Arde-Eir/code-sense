@@ -1,7 +1,7 @@
 import React, { useState, useRef } from 'react';
 import './App.css'; 
 
-// --- IMPORTS ---
+// IMPORTS 
 // @ts-ignore
 import * as parserModule from './grammar/cppParser.js'; 
 import { SymbolTable } from './analysis/SymbolTable';

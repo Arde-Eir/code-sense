@@ -15,7 +15,7 @@ export function analyzeDataFlow(node: any, initializedVars: Set<string> = new Se
         // 1. Check if the value is valid
         analyzeDataFlow(node.value, initializedVars);
 
-        // 2. Check if 'x' exists (we can assign to existing vars)
+        // 2. Check if 'x' exists 
         initializedVars.add(node.name); 
     }
 
@@ -45,7 +45,7 @@ export function analyzeDataFlow(node: any, initializedVars: Set<string> = new Se
         analyzeDataFlow(node.condition, initializedVars);
         
         // Create a branched scope for the 'If' body
-        // (Variables declared inside IF shouldn't leak out)
+        // (Variables declared inside IF shouldn't/will not leak out)
         analyzeDataFlow(node.body, new Set(initializedVars));
         
         if (node.elseBody) {
@@ -59,10 +59,10 @@ export function analyzeDataFlow(node: any, initializedVars: Set<string> = new Se
         analyzeDataFlow(node.body, new Set(initializedVars));
     }
 
-    // Recursion for Blocks ( { ... } ) and Programs
+    // Recursion for Blocks ( {    } ) and Programs
     else if (node.body) {
          if (Array.isArray(node.body)) {
-             // Create ONE local scope for this entire block
+             
              // This ensures "int x" on line 1 is seen by line 2
              const blockScope = new Set(initializedVars); 
 

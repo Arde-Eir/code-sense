@@ -48,10 +48,10 @@ body {
 }
 
 /* ================================================= */
-/* 🔥 NEW: EDITOR & LINE NUMBERS STYLING 🔥         */
+/*       NEW: EDITOR & LINE NUMBERS STYLING          */
 /* ================================================= */
 
-/* Wrapper: Holds the Line Numbers + Textarea together */
+/* Wrapper: Holds the Line Numbers + Text area together */
 .code-editor-wrapper {
   display: flex;
   flex: 1; /* Takes up remaining height */

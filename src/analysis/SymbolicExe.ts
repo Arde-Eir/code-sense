@@ -2,7 +2,6 @@
 
 /**
  * Performs symbolic execution to detect mathematical safety issues like division by zero.
- * It tracks variable values in a constraints map that persists across blocks.
  */
 export function checkMathSafety(node: any, constraints: Map<string, number> = new Map()): Map<string, number> {
     if (!node) return constraints;
@@ -81,7 +80,7 @@ export function checkMathSafety(node: any, constraints: Map<string, number> = ne
         }
     }
 
-    // 5. Recursion (Drill down into nested expressions)
+    // 5. Recursion 
     if (node.left) checkMathSafety(node.left, constraints);
     if (node.right) checkMathSafety(node.right, constraints);
     if (node.value) checkMathSafety(node.value, constraints);
