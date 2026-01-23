@@ -155,17 +155,25 @@ function App() {
     const logs: string[] = [];
     const log = (msg: string) => logs.push(msg);
 
-    // 1. DYNAMIC PARSER LOADING
+    // 1. DYNAMIC PARSER LOADING (Revised for Namespace Imports)
     let parseFunction;
+
     if (parserModule && typeof parserModule.parse === 'function') {
+      // Standard for "import * as parserModule"
       parseFunction = parserModule.parse;
-    } else if (parserModule && (parserModule as any).default && typeof (parserModule as any).default.parse === 'function') {
-      parseFunction = (parserModule as any).default.parse;
+    } else if (typeof parserModule === 'function') {
+      // In some environments, the module itself is the function
+      parseFunction = parserModule;
+    } else if (parserModule && (parserModule as any).default) {
+      // Fallback for default exports if they existed
+      const def = (parserModule as any).default;
+      parseFunction = typeof def.parse === 'function' ? def.parse : def;
     }
 
     if (!parseFunction) {
-       alert("CRITICAL ERROR: Parser not found!\nThe import failed. Check console for 'parserModule'.");
-       log("❌ Critical Error: Parser import failed.");
+       console.error("DEBUG: parserModule structure:", parserModule);
+       alert("CRITICAL ERROR: Parser 'parse' function not found!");
+       log("❌ Critical Error: Parser module does not contain a 'parse' function.");
        setConsoleOutput(logs);
        return;
     }
