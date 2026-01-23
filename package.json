@@ -11,7 +11,7 @@
     
     "lint": "eslint . --ext ts,tsx --report-unused-disable-directives --max-warnings 0",
     "preview": "vite preview",
-   "build:grammar":"npx pegjs --format es --output src/grammar/cppParser.js src/grammar/cpp.pegjs"
+   "build:grammar":"npx pegjs --format commonjs --output src/grammar/cppParser.js src/grammar/cpp.pegjs"
   },
   "dependencies": {
     "react": "^18.2.0",
