@@ -210,7 +210,6 @@ function App() {
       log("✅ Parsing Successful! AST Generated.");
 
       // --- 3. ANALYSIS PHASE ---
-      
       // A. Type Checking
       log("2. Running Semantic Safety Checks...");
       const symbols = new SymbolTable();
@@ -226,26 +225,23 @@ function App() {
       const rank = getRank(score);
       setGamification({ score, rank });
 
-      // 4. UPDATE UI STATE (Do this BEFORE checks that might throw errors)
+      // 4. UPDATE UI STATE (BEFORE potential errors)
       setAst(parsedAst);
-setTokens(extractTokens(parsedAst));
-setMathOps(extractMathOps(parsedAst));
-setSymbolData(extractVariables(parsedAst));
+      setTokens(extractTokens(parsedAst));
+      setMathOps(extractMathOps(parsedAst));
+      setSymbolData(extractVariables(parsedAst));
 
-      // D. MATH SAFETY (Place this last so UI updates even if it fails)
-      const finalValues = checkMathSafety(parsedAst); 
-      setSolvedValues(finalValues); // Store this for the Math Tab!
-      log("✅ Mathematical Safety: No division by zero detected.");
-
-setActiveTab('lexical');
+      // --- D. INTELLIGENT MATH SAFETY ---
+      // This single call now performs the analysis AND captures the memory map
+      const finalMemory = checkMathSafety(parsedAst); 
+      setSolvedValues(finalMemory); // Captures variable states (e.g., factor = 0)
+      
+      setActiveTab('lexical');
       log("3. Generating Control Flow Graph...");
-
-      // D. MATH SAFETY (Place this last so UI updates even if it fails)
-      checkMathSafety(parsedAst); 
       log("✅ Mathematical Safety: No division by zero detected.");
 
     } catch (error: any) {
-      // SAFE ERROR HANDLING (Prevents UI Freeze)
+      // Catch block remains the same to log errors to the UI
       console.error("Analysis Error:", error);
       if (error.location && error.location.start) {
         log(`❌ Error at Line ${error.location.start.line}: ${error.message}`);
