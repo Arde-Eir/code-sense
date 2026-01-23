@@ -1,7 +1,7 @@
 import React, { useState, useRef } from 'react';
 import './App.css'; 
 
-// --- IMPORTS: Analysis & Logic Modules ---
+// --- IMPORTS ---
 // @ts-ignore
 import * as parserModule from './grammar/cppParser.js'; 
 import { SymbolTable } from './analysis/SymbolTable';
@@ -12,33 +12,22 @@ import { calculateScore, getRank } from './gamification/Score';
 import { Visualizer } from './UI/Visualizer';
 
 // ========================================================
-// HELPER FUNCTIONS: Tree Traversal & Data Extraction
-// These functions convert the hierarchical AST into flat lists
-// for the "Deep Dive" tabs (Lexical, Symbols, Math).
+// HELPER FUNCTIONS
 // ========================================================
 
-// --- HELPER 1: Token Generation for Lexical Analysis ---
-// Reconstructs the token stream from the AST to display Keyword, Identifier, etc.
+// --- HELPER 1: Token Generation ---
 const extractTokens = (node: any, tokens: any[] = []) => {
   if (!node) return tokens;
 
-  // 1. Program / Main Function Structure
   if (node.type === 'Program') {
     tokens.push({ type: 'Keyword', value: 'int' });
     tokens.push({ type: 'Identifier', value: 'main' });
     tokens.push({ type: 'Separator', value: '(' });
     tokens.push({ type: 'Separator', value: ')' });
     tokens.push({ type: 'Separator', value: '{' });
-    
-    // Recursively process body
-    if (node.body) {
-      (Array.isArray(node.body) ? node.body : [node.body]).forEach((child: any) => extractTokens(child, tokens));
-    }
-
+    if (node.body) { (Array.isArray(node.body) ? node.body : [node.body]).forEach((child: any) => extractTokens(child, tokens)); }
     tokens.push({ type: 'Separator', value: '}' });
   }
-
-  // 2. Variable Declaration (e.g., int x = 10;)
   else if (node.type === 'VariableDecl') {
     tokens.push({ type: 'Keyword', value: node.varType }); 
     tokens.push({ type: 'Identifier', value: node.name }); 
@@ -48,43 +37,31 @@ const extractTokens = (node: any, tokens: any[] = []) => {
     }
     tokens.push({ type: 'Separator', value: ';' });
   }
-
-  // 3. Assignment (e.g., x = x + 1;)
   else if (node.type === 'Assignment') {
     tokens.push({ type: 'Identifier', value: node.name });
     tokens.push({ type: 'Operator', value: '=' });
     extractTokens(node.value, tokens);
     tokens.push({ type: 'Separator', value: ';' });
   }
-
-  // 4. Binary Expressions (e.g., x + 1)
   else if (node.type === 'BinaryExpr') {
     extractTokens(node.left, tokens);
     tokens.push({ type: 'Operator', value: node.operator });
     extractTokens(node.right, tokens);
   }
-
-  // 5. Loops (e.g., while(x > 0) { ... })
   else if (node.type === 'WhileStatement') {
     tokens.push({ type: 'Keyword', value: 'while' });
     tokens.push({ type: 'Separator', value: '(' });
     extractTokens(node.condition, tokens);
     tokens.push({ type: 'Separator', value: ')' });
     tokens.push({ type: 'Separator', value: '{' });
-    if (node.body) {
-      (Array.isArray(node.body) ? node.body : [node.body]).forEach((child: any) => extractTokens(child, tokens));
-    }
+    if (node.body) { (Array.isArray(node.body) ? node.body : [node.body]).forEach((child: any) => extractTokens(child, tokens)); }
     tokens.push({ type: 'Separator', value: '}' });
   }
-
-  // 6. Return Statement
   else if (node.type === 'ReturnStatement') {
     tokens.push({ type: 'Keyword', value: 'return' });
     extractTokens(node.value, tokens);
     tokens.push({ type: 'Separator', value: ';' });
   }
-
-  // 7. Literals (Numbers, Strings) & Identifiers
   else if (node.type === 'Integer') tokens.push({ type: 'Literal', value: node.value.toString() });
   else if (node.type === 'Float') tokens.push({ type: 'Literal', value: node.value.toString() }); 
   else if (node.type === 'String') tokens.push({ type: 'Literal', value: `"${node.value}"` });
@@ -93,34 +70,32 @@ const extractTokens = (node: any, tokens: any[] = []) => {
   return tokens;
 };
 
-// --- HELPER 2: Extract Math Operations (Recursive & Robust) ---
-// Scans the AST for binary expressions (/, *, +, -) to populate the "Math" tab.
+// --- HELPER 2: Extract Math Operations (FIXED: Handles 0.0 & Recursion) ---
 const extractMathOps = (node: any, list: any[] = []) => {
   if (!node) return list;
 
-  // If we found a math operation, add it to the list
   if (node.type === 'BinaryExpr') {
     let rightVal = '?';
     
-    // Attempt to resolve the right-hand side for display
+    // Robust right-side handling for UI display
     if (node.right.type === 'Identifier') {
         rightVal = node.right.name;
     } else if (node.right.type === 'Integer' || node.right.type === 'Float') {
         rightVal = node.right.value.toString();
     } else if (node.right.type === 'BinaryExpr') {
-        rightVal = '(Expr)'; // Nested expression
+        rightVal = '(Expr)'; 
     }
 
     list.push({ 
       op: node.operator, 
       left: node.left.type === 'Identifier' ? node.left.name : (node.left.value ?? '?'), 
-      right: rightVal, // Display the actual value (e.g., "0.0")
-      rightRaw: node.right.value, // Keep raw value for logic checks
-      line: node.location?.start.line 
+      right: rightVal, 
+      rightRaw: node.right.value, 
+      line: node.location?.start?.line || 0 
     });
   }
 
-  // RECURSION: We must check EVERY child to find nested math
+  // Recursively check all children
   if (node.body) { (Array.isArray(node.body) ? node.body : [node.body]).forEach((child: any) => extractMathOps(child, list)); }
   if (node.left) extractMathOps(node.left, list);
   if (node.right) extractMathOps(node.right, list);
@@ -132,15 +107,12 @@ const extractMathOps = (node: any, list: any[] = []) => {
 };
 
 // --- HELPER 3: Extract Variables ---
-// Finds all variable declarations to populate the "Symbols" tab.
 const extractVariables = (node: any, list: any[] = []) => {
   if (!node) return list;
   if (node.type === 'VariableDecl') {
-    list.push({ type: node.varType, name: node.name, line: node.location?.start.line });
+    list.push({ type: node.varType, name: node.name, line: node.location?.start?.line || 0 });
   }
-  if (node.body) {
-    (Array.isArray(node.body) ? node.body : [node.body]).forEach((child: any) => extractVariables(child, list));
-  }
+  if (node.body) { (Array.isArray(node.body) ? node.body : [node.body]).forEach((child: any) => extractVariables(child, list)); }
   return list;
 };
 
@@ -148,7 +120,6 @@ const extractVariables = (node: any, list: any[] = []) => {
 // MAIN COMPONENT
 // ========================================================
 function App() {
-  // --- STATE MANAGEMENT ---
   const [code, setCode] = useState(`int main() {
   int x = 10;
   int y = 5;
@@ -161,38 +132,30 @@ function App() {
   return 0;
 }`);
   
-  const [ast, setAst] = useState<any>(null); // The Abstract Syntax Tree
-  const [consoleOutput, setConsoleOutput] = useState<string[]>([]); // System logs
-  const [gamification, setGamification] = useState<{score: number, rank: string} | null>(null); // Complexity Rank
+  const [ast, setAst] = useState<any>(null);
+  const [consoleOutput, setConsoleOutput] = useState<string[]>([]);
+  const [gamification, setGamification] = useState<{score: number, rank: string} | null>(null);
   
-  // UI Logic: Tabs and Table Data
   const [activeTab, setActiveTab] = useState<'lexical' | 'syntactic' | 'symbols' | 'math' | 'logs'>('lexical');
   const [tokens, setTokens] = useState<any[]>([]);
   const [mathOps, setMathOps] = useState<any[]>([]);
   const [symbolData, setSymbolData] = useState<any[]>([]);
 
-  // Refs for scrolling logic
   const textAreaRef = useRef<HTMLTextAreaElement>(null);
-  const lineNumbersRef = useRef<HTMLDivElement>(null); // Syncs line numbers
+  const lineNumbersRef = useRef<HTMLDivElement>(null);
 
-  // --- UI LOGIC: SYNC SCROLLING ---
   const handleScroll = () => {
       if (textAreaRef.current && lineNumbersRef.current) {
           lineNumbersRef.current.scrollTop = textAreaRef.current.scrollTop;
       }
   };
 
-  // --- CORE LOGIC: ANALYZE BUTTON CLICK ---
   const handleAnalyze = () => {
     setConsoleOutput([]); 
     const logs: string[] = [];
     const log = (msg: string) => logs.push(msg);
 
-    console.log("Parser Module Loaded:", parserModule);
-    
     // 1. DYNAMIC PARSER LOADING
-    // We try multiple ways to access the 'parse' function because 
-    // imports can behave differently in Dev vs Prod environments.
     let parseFunction;
     if (parserModule && typeof parserModule.parse === 'function') {
       parseFunction = parserModule.parse;
@@ -213,7 +176,7 @@ function App() {
       const parsedAst = parseFunction(code);
       log("✅ Parsing Successful! AST Generated.");
 
-      // 3. ANALYSIS PHASE (The Pipeline)
+      // 3. ANALYSIS PHASE
       
       // A. Type Checking
       log("2. Running Semantic Safety Checks...");
@@ -221,7 +184,7 @@ function App() {
       performTypeCheck(parsedAst, symbols);
       log("✅ Type Safety: Passed.");
 
-      // B. Data Flow Analysis (Uninitialized variables)
+      // B. Data Flow Analysis
       analyzeDataFlow(parsedAst);
       log("✅ Data Flow: No uninitialized variables found.");
 
@@ -238,7 +201,6 @@ function App() {
       // 4. UPDATE UI STATE
       setAst(parsedAst);
       
-      // Generate data for tabs
       const lexTokens: any[] = [];
       extractTokens(parsedAst, lexTokens);
       setTokens(lexTokens);
@@ -246,14 +208,13 @@ function App() {
       setMathOps(extractMathOps(parsedAst));
       setSymbolData(extractVariables(parsedAst));
 
-      // Auto-switch to Lexical tab upon success
       setActiveTab('lexical');
-
       log("3. Generating Control Flow Graph...");
 
     } catch (error: any) {
-      // ERROR HANDLING: If any analysis phase fails, log it
-      if (error.location) {
+      // SAFE ERROR HANDLING (Prevents UI Freeze)
+      console.error("Analysis Error:", error);
+      if (error.location && error.location.start) {
         log(`❌ Error at Line ${error.location.start.line}: ${error.message}`);
       } else {
         log(`❌ System Error: ${error.message}`);
@@ -263,24 +224,17 @@ function App() {
     setConsoleOutput(logs);
   };
 
-  // --- INTERACTION: SYNC VISUALIZER WITH EDITOR ---
-  // When a user hovers over a node in the graph, scroll the text area to that line.
   const handleNodeHover = (location: any) => {
     if (!location || !textAreaRef.current) return;
     const startIndex = location.start.offset;
     const endIndex = location.end.offset;
-    
-    // Set focus and highlight text
     textAreaRef.current.focus();
     textAreaRef.current.setSelectionRange(startIndex, endIndex);
-    
-    // Calculate scroll position based on line height
-    const lineHeight = 21; // MUST MATCH CSS LINE-HEIGHT
+    const lineHeight = 21; 
     const scrollPos = (location.start.line - 1) * lineHeight;
     textAreaRef.current.scrollTop = scrollPos - 40; 
   };
 
-  // Calculate Line Count for the sidebar
   const lineCount = code.split('\n').length;
   const lineNumbers = Array.from({ length: lineCount }, (_, i) => i + 1);
 
@@ -288,36 +242,28 @@ function App() {
     <div className="app-container">
       <header className="header">
         <h1>Code Sense 🎓 (v2)</h1>
-        <p>C++ Static Analysis & Visualization Tool</p>
       </header>
 
       <div className="main-content">
-        {/* --- LEFT PANEL: Code Editor & Analysis Tabs --- */}
         <div className="editor-panel">
           <h3>Source Code Input</h3>
           
-          {/* WRAPPER: Contains Line Numbers + Text Area */}
           <div className="code-editor-wrapper">
               <div className="line-numbers" ref={lineNumbersRef}>
-                  {lineNumbers.map(num => (
-                      <div key={num}>{num}</div>
-                  ))}
+                  {lineNumbers.map(num => ( <div key={num}>{num}</div> ))}
               </div>
               <textarea 
                 ref={textAreaRef} 
                 value={code} 
                 onChange={(e) => setCode(e.target.value)}
-                onScroll={handleScroll} // SYNC SCROLL HERE
+                onScroll={handleScroll} 
                 spellCheck={false}
               />
           </div>
 
           <button onClick={handleAnalyze} className="analyze-btn">Analyze Code 🚀</button>
 
-          {/* DEEP DIVE PANEL (Tabs) */}
           <div className="logs-panel" style={{ display: 'flex', flexDirection: 'column', padding: 0 }}>
-            
-            {/* Tab Navigation Buttons */}
             <div className="tabs-header">
               <button className={`tab-btn ${activeTab === 'lexical' ? 'active' : ''}`} onClick={() => setActiveTab('lexical')}>1. Lexical</button>
               <button className={`tab-btn ${activeTab === 'syntactic' ? 'active' : ''}`} onClick={() => setActiveTab('syntactic')}>2. Syntactic</button>
@@ -326,10 +272,7 @@ function App() {
               <button className={`tab-btn ${activeTab === 'logs' ? 'active' : ''}`} onClick={() => setActiveTab('logs')}>5. Logs</button>
             </div>
 
-            {/* Tab Content Rendering */}
             <div className="tab-content">
-              
-              {/* TAB 1: LEXICAL ANALYSIS (Token Table) */}
               {activeTab === 'lexical' && (
                 tokens.length > 0 ? (
                   <table className="data-table">
@@ -337,12 +280,7 @@ function App() {
                     <tbody>
                       {tokens.map((t, i) => (
                         <tr key={i}>
-                          <td style={{ 
-                            color: t.type === 'Keyword' ? '#c586c0' : 
-                                   t.type === 'Identifier' ? '#9cdcfe' : 
-                                   t.type === 'Literal' ? '#b5cea8' : 
-                                   t.type === 'Operator' ? '#d4d4d4' : '#808080'
-                          }}>{t.type}</td>
+                          <td style={{ color: t.type === 'Keyword' ? '#c586c0' : t.type === 'Identifier' ? '#9cdcfe' : t.type === 'Literal' ? '#b5cea8' : '#d4d4d4' }}>{t.type}</td>
                           <td>{t.value}</td>
                         </tr>
                       ))}
@@ -351,36 +289,26 @@ function App() {
                 ) : <div>No tokens generated yet.</div>
               )}
 
-              {/* TAB 2: SYNTACTIC ANALYSIS (AST JSON View) */}
-              {activeTab === 'syntactic' && (
-                <div className="json-view">
-                  {ast ? JSON.stringify(ast, null, 2) : "No AST generated."}
-                </div>
-              )}
+              {activeTab === 'syntactic' && <div className="json-view">{ast ? JSON.stringify(ast, null, 2) : "No AST generated."}</div>}
 
-              {/* TAB 3: Symbol Table (Variable definitions) */}
               {activeTab === 'symbols' && (
                 symbolData.length > 0 ? (
                   <table className="data-table">
                     <thead><tr><th>Type</th><th>Variable</th><th>Line</th></tr></thead>
                     <tbody>
-                      {symbolData.map((s, i) => (
-                        <tr key={i}><td>{s.type}</td><td>{s.name}</td><td>{s.line}</td></tr>
-                      ))}
+                      {symbolData.map((s, i) => ( <tr key={i}><td>{s.type}</td><td>{s.name}</td><td>{s.line}</td></tr> ))}
                     </tbody>
                   </table>
                 ) : <div>No variables detected.</div>
               )}
 
-              {/* TAB 4: Math Safety (Division Checks) */}
               {activeTab === 'math' && (
                 mathOps.length > 0 ? (
                   <table className="data-table">
                     <thead><tr><th>Line</th><th>Operation</th><th>Status</th></tr></thead>
                     <tbody>
                       {mathOps.map((op, i) => {
-                        // STRICT SAFETY CHECK FOR UI TABLE
-                        // Flags literal 0, string "0", or string "0.0" as UNSAFE
+                        // STRICT SAFETY CHECK FOR UI
                         const isZero = op.right == 0 || op.right === "0" || op.right === "0.0";
                         const isUnsafe = op.op === '/' && isZero;
                         return (
@@ -398,28 +326,22 @@ function App() {
                 ) : <div>No math operations detected.</div>
               )}
 
-              {/* TAB 5: System Logs */}
               {activeTab === 'logs' && consoleOutput.map((line, i) => (
                 <div key={i} className={line.includes("Error") ? "log-error" : "log-success"}>{line}</div>
               ))}
-
             </div>
-
           </div>
         </div>
 
-        {/* --- RIGHT PANEL: Visualizer (Flow Chart) --- */}
         <div className="visualizer-panel">
           <div className="viz-header">
             <h3>Control Flow Graph</h3>
             {gamification && <span className="badge">Rank: <strong>{gamification.rank}</strong></span>}
           </div>
-          
           <div className="canvas-container">
              <Visualizer ast={ast} onNodeHover={handleNodeHover} />
           </div>
         </div>
-
       </div>
     </div>
   );

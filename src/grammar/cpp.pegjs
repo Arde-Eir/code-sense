@@ -1,3 +1,4 @@
+//
 // --- C++ Grammar for Code Sense (Real-World Compatible) ---
 
 // 1. UPDATED START RULE: Allows whitespace/newlines at the very start
@@ -25,11 +26,7 @@ MainFunction
   = _ "int" _ "main" _ "(" _ ")" _ "{" _ body:Statement* _ "}" _ {
       // Filter null comments
       const cleanBody = body.filter(s => s !== null);
-      
-      return { 
-        type: "Program", 
-        body: cleanBody 
-      }; 
+      return { type: "Program", body: cleanBody }; 
     }
 
 Statement
@@ -99,7 +96,6 @@ ElseClause
 
 Block
   = "{" _ body:Statement* _ "}" { 
-      // FIX: Filter out null comments here too
       return { 
         type: "Block", 
         body: body.filter(s => s !== null) 
@@ -116,10 +112,11 @@ Expression
 
 Comparison
   = left:BinaryExpression _ op:(">" / "<" / ">=" / "<=" / "==" / "!=") _ right:BinaryExpression {
-      return { type: "BinaryExpr", operator: op, left, right };
+      return { type: "BinaryExpr", operator: op, left, right, location: location() };
     }
   / BinaryExpression
 
+// FIX: Added 'location: location()' here so Math Safety knows where to flag errors
 BinaryExpression
   = head:Term tail:(_ ("+" / "-") _ Term)* {
       return tail.reduce(function(result, element) {
@@ -127,7 +124,8 @@ BinaryExpression
           type: "BinaryExpr",
           operator: element[1],
           left: result,
-          right: element[3]
+          right: element[3],
+          location: location() 
         };
       }, head);
     }
@@ -140,14 +138,14 @@ Term
           operator: element[1],
           left: result,
           right: element[3],
-          location: location() // <--- CRITICAL FIX FOR MATH ERROR
+          location: location() 
         };
       }, head);
     }
 
 Factor
   = "(" _ expr:Expression _ ")" { return expr; }
-  / Float
+  / Float    // <--- CRITICAL: Float MUST be before Integer to catch "0.0"
   / Integer
   / Identifier
   / StringLiteral
@@ -176,6 +174,7 @@ BooleanLiteral
 StringLiteral
   = '"' chars:[^"]* '"' { return { type: "String", value: chars.join("") }; }
 
+// Float Rule
 Float "float"
   = [0-9]+ "." [0-9]+ { return { type: "Float", value: parseFloat(text()) }; }
 

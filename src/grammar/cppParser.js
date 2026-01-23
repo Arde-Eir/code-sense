@@ -264,11 +264,7 @@ function peg$parse(input, options) {
   function peg$f5(body) {
       // Filter null comments
       const cleanBody = body.filter(s => s !== null);
-      
-      return { 
-        type: "Program", 
-        body: cleanBody 
-      }; 
+      return { type: "Program", body: cleanBody }; 
   }
   function peg$f6(stmt) {    return stmt;  }
   function peg$f7(type, name, value) {
@@ -314,7 +310,6 @@ function peg$parse(input, options) {
   }
   function peg$f12(body) {    return body;  }
   function peg$f13(body) {    
-         // FIX: Filter out null comments here too
          return { 
            type: "Block", 
            body: body.filter(s => s !== null) 
@@ -322,7 +317,7 @@ function peg$parse(input, options) {
   }
   function peg$f14() {    return null;  }
   function peg$f15(left, op, right) {
-      return { type: "BinaryExpr", operator: op, left, right };
+      return { type: "BinaryExpr", operator: op, left, right, location: location() };
   }
   function peg$f16(head, tail) {
       return tail.reduce(function(result, element) {
@@ -330,7 +325,8 @@ function peg$parse(input, options) {
           type: "BinaryExpr",
           operator: element[1],
           left: result,
-          right: element[3]
+          right: element[3],
+          location: location() 
         };
       }, head);
   }
@@ -341,7 +337,7 @@ function peg$parse(input, options) {
           operator: element[1],
           left: result,
           right: element[3],
-          location: location() // <--- CRITICAL FIX FOR MATH ERROR
+          location: location() 
         };
       }, head);
   }
