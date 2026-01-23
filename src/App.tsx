@@ -20,6 +20,7 @@ const extractTokens = (node: any, tokens: any[] = []) => {
   if (!node) return tokens;
 
   if (node.type === 'Program') {
+    // ... existing Program logic ...
     tokens.push({ type: 'Keyword', value: 'int' });
     tokens.push({ type: 'Identifier', value: 'main' });
     tokens.push({ type: 'Separator', value: '(' });
@@ -29,6 +30,7 @@ const extractTokens = (node: any, tokens: any[] = []) => {
     tokens.push({ type: 'Separator', value: '}' });
   }
   else if (node.type === 'VariableDecl') {
+    // ... existing VariableDecl logic ...
     tokens.push({ type: 'Keyword', value: node.varType }); 
     tokens.push({ type: 'Identifier', value: node.name }); 
     if (node.value) {
@@ -38,17 +40,20 @@ const extractTokens = (node: any, tokens: any[] = []) => {
     tokens.push({ type: 'Separator', value: ';' });
   }
   else if (node.type === 'Assignment') {
+    // ... existing Assignment logic ...
     tokens.push({ type: 'Identifier', value: node.name });
     tokens.push({ type: 'Operator', value: '=' });
     extractTokens(node.value, tokens);
     tokens.push({ type: 'Separator', value: ';' });
   }
   else if (node.type === 'BinaryExpr') {
+    // ... existing BinaryExpr logic ...
     extractTokens(node.left, tokens);
     tokens.push({ type: 'Operator', value: node.operator });
     extractTokens(node.right, tokens);
   }
   else if (node.type === 'WhileStatement') {
+    // ... existing WhileStatement logic ...
     tokens.push({ type: 'Keyword', value: 'while' });
     tokens.push({ type: 'Separator', value: '(' });
     extractTokens(node.condition, tokens);
@@ -57,11 +62,29 @@ const extractTokens = (node: any, tokens: any[] = []) => {
     if (node.body) { (Array.isArray(node.body) ? node.body : [node.body]).forEach((child: any) => extractTokens(child, tokens)); }
     tokens.push({ type: 'Separator', value: '}' });
   }
+  // --- ADD THE NEW IF STATEMENT LOGIC HERE ---
+  else if (node.type === 'IfStatement') {
+    tokens.push({ type: 'Keyword', value: 'if' });
+    tokens.push({ type: 'Separator', value: '(' });
+    extractTokens(node.condition, tokens);
+    tokens.push({ type: 'Separator', value: ')' });
+    
+    // Check if the body exists and extract its tokens
+    if (node.body) extractTokens(node.body, tokens);
+    
+    // If there is an 'else' part, handle it too
+    if (node.elseBody) {
+      tokens.push({ type: 'Keyword', value: 'else' });
+      extractTokens(node.elseBody, tokens);
+    }
+  }
   else if (node.type === 'ReturnStatement') {
+    // ... existing ReturnStatement logic ...
     tokens.push({ type: 'Keyword', value: 'return' });
     extractTokens(node.value, tokens);
     tokens.push({ type: 'Separator', value: ';' });
   }
+  // ... existing literal and identifier logic ...
   else if (node.type === 'Integer') tokens.push({ type: 'Literal', value: node.value.toString() });
   else if (node.type === 'Float') tokens.push({ type: 'Literal', value: node.value.toString() }); 
   else if (node.type === 'String') tokens.push({ type: 'Literal', value: `"${node.value}"` });
