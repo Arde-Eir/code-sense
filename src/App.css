@@ -47,16 +47,12 @@ body {
   background: #1e1e1e; 
 }
 
-/* ================================================= */
-/*       NEW: EDITOR & LINE NUMBERS STYLING          */
-/* ================================================= */
-
 /* Wrapper: Holds the Line Numbers + Text area together */
 .code-editor-wrapper {
   display: flex;
-  flex: 1; /* Takes up remaining height */
+  flex: 1; 
   background: #1e1e1e;
-  border: 1px solid #333; /* The border is now on the wrapper, not the textarea */
+  border: 1px solid #333; 
   font-family: 'Fira Code', monospace;
   font-size: 14px;
   overflow: hidden; /* Prevents double scrollbars */
@@ -65,15 +61,15 @@ body {
 
 /* Line Numbers Column */
 .line-numbers {
-  padding: 10px 5px; /* Vertical padding (10px) MUST match textarea */
+  padding: 10px 5px; 
   background: #1e1e1e;
-  color: #6e7681; /* VS Code-style dim gray */
+  color: #6e7681; 
   text-align: right;
   border-right: 1px solid #333;
-  min-width: 35px; /* Fixed width for alignment */
-  user-select: none; /* User cannot accidentally select the numbers */
-  line-height: 21px; /* CRITICAL: Must match textarea line-height */
-  overflow: hidden; /* Scroll is handled by JS logic */
+  min-width: 35px; 
+  user-select: none; 
+  line-height: 21px; 
+  overflow: hidden; 
   opacity: 0.8;
 }
 
@@ -82,10 +78,10 @@ textarea {
   flex: 1; 
   background: #1e1e1e; 
   color: #d4d4d4; 
-  border: none; /* Remove border (wrapper has it) */
+  border: none; 
   font-family: 'Fira Code', monospace; 
   font-size: 14px; 
-  padding: 10px; /* Vertical padding (10px) MUST match line-numbers */
+  padding: 10px; 
   resize: none; 
   outline: none; 
   
