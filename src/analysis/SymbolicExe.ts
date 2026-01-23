@@ -2,7 +2,7 @@
 export function checkMathSafety(node: any, constraints: Map<string, number> = new Map()) {
     if (!node) return;
 
-    // 1. Handle Program / Block traversal (CRITICAL ADDITION)
+    // 1. Handle Program / Block traversal 
     if (node.type === 'Program' || node.type === 'Block') {
         if (node.body && Array.isArray(node.body)) {
              node.body.forEach((child: any) => checkMathSafety(child, constraints));
@@ -23,7 +23,7 @@ export function checkMathSafety(node: any, constraints: Map<string, number> = ne
             constraints.set(node.name, node.value.value);
         }
     }
-    // Handle Assignment updates
+    // Handle Assignment 
     if (node.type === 'Assignment') {
         // Case 1: Simple Number (e.g., x = 5;)
         // We know the value, so we track it.
@@ -31,7 +31,6 @@ export function checkMathSafety(node: any, constraints: Map<string, number> = ne
             constraints.set(node.name, node.value.value);
         } 
         // Case 2: Complex Expression (e.g., x = x + 1;)
-        // We don't know the new value, so we MUST "forget" the old one (delete from constraints).
         // This prevents false positives like "Division by Zero" on a variable that changed.
         else {
             constraints.delete(node.name);
@@ -47,7 +46,7 @@ export function checkMathSafety(node: any, constraints: Map<string, number> = ne
              throw new Error(`Math Error at Line ${node.location?.start.line}: Division by Literal Zero.`);
         }}
 
-    // Recurse into children expressions (e.g. for nested math)
+    // Recurse into children expressions (for nested math)
     if (node.left) checkMathSafety(node.left, constraints);
     if (node.right) checkMathSafety(node.right, constraints);
     if (node.value) checkMathSafety(node.value, constraints);

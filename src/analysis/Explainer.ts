@@ -1,4 +1,4 @@
-// 1. THE KNOWLEDGE BASE (Templates)
+// 1. THE KNOWLEDGE BASE 
 const TEMPLATES = {
     VariableDecl: (name: string, type: string, val: string) => 
         `You are declaring a new variable named **${name}**. It is a storage box that holds **${type}** data. You have initialized it with the value **${val}**.`,
@@ -20,7 +20,6 @@ export function explainNode(node: any): string {
     switch (node.type) {
         case 'VariableDecl':
             // Extract raw values for the template
-            // Note: In a real app, you might pretty-print the 'value' expression
             return TEMPLATES.VariableDecl(node.name, node.varType, JSON.stringify(node.value));
 
         case 'WhileStatement':

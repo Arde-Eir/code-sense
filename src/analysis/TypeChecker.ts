@@ -8,21 +8,21 @@ export function performTypeCheck(ast: any, symbols: SymbolTable) {
 function traverse(node: any, symbols: SymbolTable) {
     if (!node) return;
 
-    // 1. Handle Variable Declaration (int x = 10;)
+    // 1. Handle Variable Declaration 
     if (node.type === 'VariableDecl') {
-        const declaredType = node.varType; // e.g., "int"
-        const valueType = inferType(node.value, symbols); // We need this to return "int"
+        const declaredType = node.varType; 
+        const valueType = inferType(node.value, symbols); 
 
         // Register the variable in the symbol table
         symbols.define(node.name, declaredType);
 
-        // Check for mismatches (e.g., int x = "hello";)
+        // Check for mismatches 
         if (valueType !== 'unknown' && valueType !== declaredType) {
              throw new Error(`Type Error at Line ${node.location?.start.line}: Cannot assign value of type '${valueType}' to variable '${node.name}' (expects '${declaredType}').`);
         }
     }
     
-    // 2. Handle Assignment (x = 5;)
+    // 2. Handle Assignment 
     else if (node.type === 'Assignment') {
         const varType = symbols.lookup(node.name);
         if (!varType) {

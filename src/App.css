@@ -1,3 +1,5 @@
+/* src/App.css */
+
 /* --- Global Styles --- */
 body { 
   margin: 0; 
@@ -45,35 +47,68 @@ body {
   background: #1e1e1e; 
 }
 
+/* ================================================= */
+/* 🔥 NEW: EDITOR & LINE NUMBERS STYLING 🔥         */
+/* ================================================= */
+
+/* Wrapper: Holds the Line Numbers + Textarea together */
+.code-editor-wrapper {
+  display: flex;
+  flex: 1; /* Takes up remaining height */
+  background: #1e1e1e;
+  border: 1px solid #333; /* The border is now on the wrapper, not the textarea */
+  font-family: 'Fira Code', monospace;
+  font-size: 14px;
+  overflow: hidden; /* Prevents double scrollbars */
+  margin-bottom: 10px;
+}
+
+/* Line Numbers Column */
+.line-numbers {
+  padding: 10px 5px; /* Vertical padding (10px) MUST match textarea */
+  background: #1e1e1e;
+  color: #6e7681; /* VS Code-style dim gray */
+  text-align: right;
+  border-right: 1px solid #333;
+  min-width: 35px; /* Fixed width for alignment */
+  user-select: none; /* User cannot accidentally select the numbers */
+  line-height: 21px; /* CRITICAL: Must match textarea line-height */
+  overflow: hidden; /* Scroll is handled by JS logic */
+  opacity: 0.8;
+}
+
+/* The Code Input Area */
 textarea { 
   flex: 1; 
   background: #1e1e1e; 
   color: #d4d4d4; 
-  border: 1px solid #333; 
+  border: none; /* Remove border (wrapper has it) */
   font-family: 'Fira Code', monospace; 
   font-size: 14px; 
-  padding: 10px; 
+  padding: 10px; /* Vertical padding (10px) MUST match line-numbers */
   resize: none; 
   outline: none; 
   
-  /* CRITICAL FOR HIGHLIGHTING LOGIC */
-  line-height: 20px; 
+  /* CRITICAL FOR SYNCING */
+  line-height: 21px; 
   white-space: pre; 
-  overflow: auto;
+  overflow: auto; /* Scrollbar appears here */
 }
 
-/* 🔥 FORCE HIGHLIGHT VISIBILITY 🔥 */
+/* Selection Highlight */
 textarea::selection {
-  background-color: #007acc; /* Bright Blue */
+  background-color: #04395e; 
   color: white;
 }
 textarea::-moz-selection {
-  background-color: #007acc;
+  background-color: #04395e;
   color: white;
 }
 
+/* ================================================= */
+
 .analyze-btn { 
-  margin: 10px 0; 
+  margin: 0 0 10px 0; 
   padding: 10px; 
   background: #007acc; 
   color: white; 
@@ -86,12 +121,11 @@ textarea::-moz-selection {
   background: #005f9e; 
 }
 
-/* --- Logs Panel (Updated for Tabs) --- */
+/* --- Logs Panel --- */
 .logs-panel { 
-  height: 200px; /* Increased slightly for tabs */
+  height: 200px; 
   background: #000; 
   border-top: 1px solid #333; 
-  /* Flex is handled inline in TSX, but good to have here too */
   display: flex; 
   flex-direction: column;
 }
@@ -144,18 +178,13 @@ textarea::-moz-selection {
   stroke-width: 2; 
 }
 
-/* ========================================= */
-/* NEW STYLES FOR DEEP DIVE TABS        */
-/* ========================================= */
-
-/* Tab Navigation Bar */
+/* --- Deep Dive Tabs --- */
 .tabs-header {
   display: flex;
   background-color: #252526;
   border-bottom: 1px solid #333;
 }
 
-/* Individual Tab Buttons */
 .tab-btn {
   background: none;
   border: none;
@@ -173,26 +202,24 @@ textarea::-moz-selection {
   color: white;
 }
 
-/* Active Tab Style */
 .tab-btn.active {
   background-color: #1e1e1e;
-  color: #4ec9b0; /* Green accent matches logs */
+  color: #4ec9b0; 
   border-bottom: 2px solid #4ec9b0;
   font-weight: bold;
 }
 
-/* Content Area inside the Panel */
 .tab-content {
   flex: 1;
   background-color: #1e1e1e;
   padding: 10px;
-  overflow-y: auto; /* Scroll ONLY the content, not the tabs */
+  overflow-y: auto; 
   font-family: 'Fira Code', monospace;
   font-size: 12px;
   color: #d4d4d4;
 }
 
-/* Data Tables (Symbol Table / Math Safety) */
+/* Data Tables */
 .data-table {
   width: 100%;
   border-collapse: collapse;
@@ -205,15 +232,14 @@ textarea::-moz-selection {
 }
 
 .data-table th { 
-  color: #9cdcfe; /* Light Blue for Headers */
+  color: #9cdcfe; 
   font-weight: bold;
 }
 
 .data-table td { 
-  color: #ce9178; /* Orange-ish for values */
+  color: #ce9178; 
 }
 
-/* JSON View (AST) */
 .json-view {
   white-space: pre-wrap;
   color: #ce9178;

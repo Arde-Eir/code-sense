@@ -16,9 +16,6 @@ export function analyzeDataFlow(node: any, initializedVars: Set<string> = new Se
         analyzeDataFlow(node.value, initializedVars);
 
         // 2. Check if 'x' exists (we can assign to existing vars)
-        // Note: In C++, assigning to an uninitialized var technically initializes it,
-        // but for safety, we usually ensure it's declared first.
-        // For this thesis, we'll assume declaration handles initialization.
         initializedVars.add(node.name); 
     }
 
@@ -60,11 +57,11 @@ export function analyzeDataFlow(node: any, initializedVars: Set<string> = new Se
     // Recursion for Blocks ( { ... } ) and Programs
     else if (node.body) {
          if (Array.isArray(node.body)) {
-             // ✅ FIX: Create ONE local scope for this entire block
+             // Create ONE local scope for this entire block
              // This ensures "int x" on line 1 is seen by line 2
              const blockScope = new Set(initializedVars); 
 
-             // ✅ FIX: Add type '(n: any)' to silence the TypeScript error
+             // Add type '(n: any)' to silence the TypeScript error
              node.body.forEach((n: any) => analyzeDataFlow(n, blockScope));
          } else {
              // Single statement body
