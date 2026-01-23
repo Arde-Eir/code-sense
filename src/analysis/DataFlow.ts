@@ -29,6 +29,11 @@ export function analyzeDataFlow(node: any, initializedVars: Set<string> = new Se
         }
     }
 
+    // CASE: Return Statement (return x;)
+    if (node.type === 'ReturnStatement') {
+        analyzeDataFlow(node.value, initializedVars);
+    }
+
     // Recursion for Expressions (Binary Math)
     if (node.type === 'BinaryExpr') {
         analyzeDataFlow(node.left, initializedVars);

@@ -1,5 +1,12 @@
+const TYPE_MAP: Record<string, string> = {
+    int: "a whole number",
+    float: "a decimal number",
+    string: "a piece of text",
+    bool: "a True/False value"
+};
 // 1. THE KNOWLEDGE BASE 
 const TEMPLATES = {
+    
     VariableDecl: (name: string, type: string, val: string) => 
         `You are declaring a new variable named **${name}**. It is a storage box that holds **${type}** data. You have initialized it with the value **${val}**.`,
     
@@ -30,6 +37,10 @@ export function explainNode(node: any): string {
         case 'IfStatement':
             const ifCond = synthesizeExpression(node.condition);
             return TEMPLATES.IfStatement(ifCond);
+        
+        case 'Assignment':
+            const assignedVal = synthesizeExpression(node.value);
+            return TEMPLATES.Assignment(node.name, assignedVal);
 
         default:
             return "This is a C++ statement.";
@@ -38,10 +49,12 @@ export function explainNode(node: any): string {
 
 // Helper to turn AST Expression back into string for the explanation
 function synthesizeExpression(expr: any): string {
+    if (!expr) return "";
     if (expr.type === 'BinaryExpr') {
         return `${synthesizeExpression(expr.left)} ${expr.operator} ${synthesizeExpression(expr.right)}`;
     }
     if (expr.type === 'Identifier') return expr.name;
-    if (expr.type === 'Integer') return expr.value.toString();
-    return "...";
+    if (expr.type === 'Integer' || expr.type === 'Float') return expr.value.toString();
+    if (expr.type === 'String') return `"${expr.value}"`;
+    return "something"; 
 }

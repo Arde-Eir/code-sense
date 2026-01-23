@@ -15,10 +15,13 @@ function traverse(node: any, symbols: SymbolTable) {
 
         // Register the variable in the symbol table
         symbols.define(node.name, declaredType);
-
+    
         // Check for mismatches 
         if (valueType !== 'unknown' && valueType !== declaredType) {
-             throw new Error(`Type Error at Line ${node.location?.start.line}: Cannot assign value of type '${valueType}' to variable '${node.name}' (expects '${declaredType}').`);
+            // Allow int -> float promotion
+            if (!(declaredType === 'float' && valueType === 'int')) {
+                throw new Error(`Type Error at Line ${node.location?.start.line}: Cannot assign value of type '${valueType}' to variable '${node.name}' (expects '${declaredType}').`);
+            }
         }
     }
     
@@ -36,9 +39,31 @@ function traverse(node: any, symbols: SymbolTable) {
     }
     
     // 3. Traverse into Blocks ( { ... } )
+    // 3. Traverse into Blocks (Revised for Scoping)
     else if (node.type === 'Program' || node.type === 'Block') {
+        symbols.enterScope(); // Create new scope level
         if (node.body && Array.isArray(node.body)) {
              node.body.forEach((child: any) => traverse(child, symbols));
+        }
+        symbols.exitScope(); // Clean up scope level
+    }
+    
+    // 4. Traverse into Loops and Ifs
+    else if (node.type === 'WhileStatement' || node.type === 'IfStatement') {
+        // Checking the condition type
+        const condType = inferType(node.condition, symbols);
+        if (condType !== 'bool' && condType !== 'int') {
+             throw new Error(`Type Error: Condition must be boolean or integer.`);
+        }
+
+        symbols.enterScope();
+        traverse(node.body, symbols);
+        symbols.exitScope();
+
+        if (node.elseBody) {
+            symbols.enterScope();
+            traverse(node.elseBody, symbols);
+            symbols.exitScope();
         }
     }
     
@@ -61,9 +86,9 @@ function inferType(node: any, symbols: SymbolTable): string {
         return symbols.lookup(node.name) || 'unknown';
     }
 
-    if (node.type === 'BinaryExpr') {
-        const leftType = inferType(node.left, symbols);
-        const rightType = inferType(node.right, symbols); // Get right type
+        if (node.type === 'BinaryExpr') {
+            const leftType = inferType(node.left, symbols);
+            const rightType = inferType(node.right, symbols); // Get right type
         
         // Boolean operations always return bool
         if (['>', '<', '>=', '<=', '==', '!='].includes(node.operator)) {

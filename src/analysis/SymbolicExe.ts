@@ -3,19 +3,23 @@ export function checkMathSafety(node: any, constraints: Map<string, number> = ne
   
     // 1. Traverse Program/Block
     if (node.type === 'Program' || node.type === 'Block') {
-        if (node.body && Array.isArray(node.body)) {
-             node.body.forEach((child: any) => checkMathSafety(child, constraints));
-        }
-        return;
+    if (node.body && Array.isArray(node.body)) {
+         // Create a copy of constraints for this block
+         const blockConstraints = new Map(constraints);
+         node.body.forEach((child: any) => checkMathSafety(child, blockConstraints));
     }
+    return;
+}
   
     // 2. Traverse Loops/Ifs
     if (node.type === 'WhileStatement' || node.type === 'IfStatement') {
-         checkMathSafety(node.condition, constraints); 
-         checkMathSafety(node.body, constraints);
-         if (node.elseBody) checkMathSafety(node.elseBody, constraints);
-         return;
-    }
+     checkMathSafety(node.condition, constraints); 
+     
+     // Bodies get a copy of the constraints
+     checkMathSafety(node.body, new Map(constraints));
+     if (node.elseBody) checkMathSafety(node.elseBody, new Map(constraints));
+     return;
+}
   
     // 3. Update Variables
     if (node.type === 'VariableDecl' || node.type === 'Assignment') {
@@ -42,7 +46,7 @@ export function checkMathSafety(node: any, constraints: Map<string, number> = ne
     }
   
     // 4. CRITICAL: Check Division Safety
-    if (node.type === 'BinaryExpr' && node.operator === '/') {
+    if (node.type === 'BinaryExpr' && (node.operator === '/' || node.operator === '%')) {
         const denominator = node.right;
         
         // CHECK A: Literal Zero (0 or 0.0)

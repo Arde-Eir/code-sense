@@ -28,6 +28,10 @@ node.body.forEach((child: any) => {
             score += calculateScore(node.body, nextDepth);
         }
     }
+
+    if (node.elseBody) {
+        score += calculateScore(node.elseBody, nextDepth);
+    }
     
     // Also check 'else' blocks or 'left/right' in expressions if needed
     
@@ -36,8 +40,8 @@ node.body.forEach((child: any) => {
 
 export function getRank(score: number): string {
     if (score === 0) return "S+ (Perfectly Flat)";
-    if (score <= 3) return "A (Clean)";
-    if (score <= 6) return "B (Acceptable)";
-    if (score <= 10) return "C (Complex)";
+    if (score <= 5) return "A (Clean)";        // Raised from 3
+    if (score <= 10) return "B (Acceptable)";  // Raised from 6
+    if (score <= 15) return "C (Complex)";     // Raised from 10
     return "F (Spaghetti Code)";
 }

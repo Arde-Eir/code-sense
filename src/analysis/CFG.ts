@@ -11,9 +11,11 @@ export function buildCFG(ast: any) {
         if (node.type === "String") return `"${node.value}"`;
         if (node.type === "Boolean") return `${node.value}`;
         if (node.type === "Identifier") return node.name;
-        if (node.type === "BinaryExpr") return "a calculated result"; // Simplification for complex math
-        return "a value";
+        if (node.type === "BinaryExpr") {
+        return `${getReadableValue(node.left)} ${node.operator} ${getReadableValue(node.right)}`;
     }
+    return "a value";
+}
 
     // MERGED: Accepts 'description' (for tooltip) AND 'location' (for scrolling)
     function createNode(label: string, description: string, location: any = null) {
@@ -106,9 +108,10 @@ export function buildCFG(ast: any) {
     }
 
     const startId = createNode("Start", "Program Begin");
-    const endId = traverse(ast, startId);
-    createNode("End", "Program End");
-    createEdge(endId, `${nodeId - 1}`);
+    const lastActionId = traverse(ast, startId); // Capture the last statement's ID
+
+    const endId = createNode("End", "Program End"); // Capture the End node ID specifically
+    createEdge(lastActionId, endId); // Connect the last statement to the End node
 
     return { nodes, edges };
 }
