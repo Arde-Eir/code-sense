@@ -340,20 +340,20 @@ setActiveTab('lexical');
                   <table className="data-table">
                     <thead><tr><th>Line</th><th>Operation</th><th>Status</th></tr></thead>
                     <tbody>
-                      {mathOps.map((op, i) => {
-  const isZero = op.right == 0 || op.right === "0" || op.right === "0.0";
-  // Check for BOTH / and % to match your SymbolicExe logic
-  const isUnsafe = (op.op === '/' || op.op === '%') && isZero; 
-  
-  return (
-    <tr key={i}>
-      <td>{op.line}</td>
-      <td>{op.left} {op.op} {op.right}</td>
-      <td style={{color: isUnsafe ? '#f44336' : '#4ec9b0', fontWeight: isUnsafe ? 'bold' : 'normal'}}>
-          {isUnsafe ? '⚠️ UNSAFE' : '✅ SAFE'}
-      </td>
-    </tr>
-  );
+                  {mathOps.map((op, i) => {
+    // Look up the value of the variable from our analysis memory
+    const variableValue = solvedValues.get(op.right);
+    const isUnsafe = (op.op === '/' || op.op === '%') && (op.right === '0.0' || variableValue === 0);
+
+    return (
+        <tr key={i}>
+            <td>{op.line}</td>
+            <td>{op.left} {op.op} {op.right}</td>
+            <td style={{color: isUnsafe ? '#f44336' : '#4ec9b0'}}>
+                {isUnsafe ? '⚠️ UNSAFE' : '✅ SAFE'}
+            </td>
+        </tr>
+    );
 })}
                     </tbody>
                   </table>

@@ -19,15 +19,16 @@ export function checkMathSafety(node: any, constraints: Map<string, number> = ne
     // 2. Traverse Loops/Ifs
     // Changes made inside an 'if' block (like factor = 0) will now be remembered after the block ends.
     if (node.type === 'WhileStatement' || node.type === 'IfStatement') {
-        checkMathSafety(node.condition, constraints);
-        
-        checkMathSafety(node.body, constraints);
-        
-        if (node.elseBody) {
-            checkMathSafety(node.elseBody, constraints);
-        }
-        return constraints;
+    checkMathSafety(node.condition, constraints);
+    
+    // Pass the actual constraints map so changes (like y = 0) persist
+    checkMathSafety(node.body, constraints);
+    
+    if (node.elseBody) {
+        checkMathSafety(node.elseBody, constraints);
     }
+    return constraints; // Path-specific return for TypeScript compliance
+}
 
     // 3. Update Variables
     // Tracks literals and identifier assignments to build a "memory" of variable values.
