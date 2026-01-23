@@ -15,9 +15,13 @@ export function checkMathSafety(node: any, constraints: Map<string, number> = ne
     if (node.type === 'WhileStatement' || node.type === 'IfStatement') {
      checkMathSafety(node.condition, constraints); 
      
-     // Bodies get a copy of the constraints
-     checkMathSafety(node.body, new Map(constraints));
-     if (node.elseBody) checkMathSafety(node.elseBody, new Map(constraints));
+     // REMOVED 'new Map(constraints)' 
+     // We now pass the original constraints so changes persist
+     checkMathSafety(node.body, constraints);
+     
+     if (node.elseBody) {
+         checkMathSafety(node.elseBody, constraints);
+     }
      return;
 }
   
