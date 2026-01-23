@@ -1,7 +1,7 @@
 export function checkMathSafety(node: any, constraints: Map<string, number> = new Map()) {
     if (!node) return;
   
-    // 1. Handle Program / Block traversal (Execute statements in order)
+    // 1. Traverse Program/Block
     if (node.type === 'Program' || node.type === 'Block') {
         if (node.body && Array.isArray(node.body)) {
              node.body.forEach((child: any) => checkMathSafety(child, constraints));
@@ -9,48 +9,46 @@ export function checkMathSafety(node: any, constraints: Map<string, number> = ne
         return;
     }
   
-    // 2. Handle Loops/Ifs traversal
+    // 2. Traverse Loops/Ifs
     if (node.type === 'WhileStatement' || node.type === 'IfStatement') {
-         checkMathSafety(node.condition, constraints); // Check condition for math errors too
+         checkMathSafety(node.condition, constraints); 
          checkMathSafety(node.body, constraints);
          if (node.elseBody) checkMathSafety(node.elseBody, constraints);
          return;
     }
   
-    // 3. Update known values (Variable Declaration)
+    // 3. Update Variables
     if (node.type === 'VariableDecl' && node.value) {
         if (node.value.type === 'Integer' || node.value.type === 'Float') {
             constraints.set(node.name, Number(node.value.value));
         } else {
-            // If we assign a complex expression, we lose track of the value
             constraints.delete(node.name);
         }
     }
-
-    // Handle Assignment 
     if (node.type === 'Assignment') {
-        // Case 1: Simple Number (e.g., x = 5;)
         if (node.value && (node.value.type === 'Integer' || node.value.type === 'Float')) {
             constraints.set(node.name, Number(node.value.value));
-        } 
-        // Case 2: Complex Expression (e.g., x = x + 1;)
-        else {
+        } else {
             constraints.delete(node.name);
         }
     }
   
-    // 4. CHECK: Division Safety (THE FIX IS HERE)
+    // 4. CRITICAL: Check Division Safety
     if (node.type === 'BinaryExpr' && node.operator === '/') {
         const denominator = node.right;
         
-        // Check A: Literal Zero (5 / 0 or 5 / 0.0)
-        if ((denominator.type === 'Integer' || denominator.type === 'Float') && Number(denominator.value) === 0) {
-             const err = new Error(`Math Error: Division by Literal Zero.`);
-             (err as any).location = node.location;
-             throw err;
+        // CHECK A: Literal Zero (0 or 0.0)
+        // We convert to Number() to handle cases where parser returns string "0.0"
+        if ((denominator.type === 'Integer' || denominator.type === 'Float')) {
+             const val = Number(denominator.value);
+             if (val === 0) {
+                 const err = new Error(`Math Error: Division by Literal Zero.`);
+                 (err as any).location = node.location;
+                 throw err;
+             }
         }
 
-        // Check B: Variable Zero (5 / zero) <--- THIS WAS MISSING
+        // CHECK B: Variable Zero
         if (denominator.type === 'Identifier') {
              const val = constraints.get(denominator.name);
              if (val === 0) {
@@ -61,7 +59,7 @@ export function checkMathSafety(node: any, constraints: Map<string, number> = ne
         }
     }
   
-    // Recurse into children expressions (for nested math like "1 + (x / y)")
+    // 5. Recursion (Drill down into nested expressions)
     if (node.left) checkMathSafety(node.left, constraints);
     if (node.right) checkMathSafety(node.right, constraints);
     if (node.value) checkMathSafety(node.value, constraints);

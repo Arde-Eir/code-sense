@@ -3,7 +3,7 @@ import './App.css';
 
 // --- IMPORTS: Analysis & Logic Modules ---
 // @ts-ignore
-import * as parserModule from './grammar/cppParser.js'; // The PEG.js generated parser
+import * as parserModule from './grammar/cppParser.js'; 
 import { SymbolTable } from './analysis/SymbolTable';
 import { performTypeCheck } from './analysis/TypeChecker';
 import { analyzeDataFlow } from './analysis/DataFlow';
@@ -24,7 +24,6 @@ const extractTokens = (node: any, tokens: any[] = []) => {
 
   // 1. Program / Main Function Structure
   if (node.type === 'Program') {
-    // Manually reconstruct the hidden "int main() {" wrapper tokens
     tokens.push({ type: 'Keyword', value: 'int' });
     tokens.push({ type: 'Identifier', value: 'main' });
     tokens.push({ type: 'Separator', value: '(' });
@@ -94,27 +93,41 @@ const extractTokens = (node: any, tokens: any[] = []) => {
   return tokens;
 };
 
-// --- HELPER 2: Extract Math Operations ---
+// --- HELPER 2: Extract Math Operations (Recursive & Robust) ---
 // Scans the AST for binary expressions (/, *, +, -) to populate the "Math" tab.
 const extractMathOps = (node: any, list: any[] = []) => {
   if (!node) return list;
+
+  // If we found a math operation, add it to the list
   if (node.type === 'BinaryExpr') {
+    let rightVal = '?';
+    
+    // Attempt to resolve the right-hand side for display
+    if (node.right.type === 'Identifier') {
+        rightVal = node.right.name;
+    } else if (node.right.type === 'Integer' || node.right.type === 'Float') {
+        rightVal = node.right.value.toString();
+    } else if (node.right.type === 'BinaryExpr') {
+        rightVal = '(Expr)'; // Nested expression
+    }
+
     list.push({ 
       op: node.operator, 
-      // Handle cases where left/right might be a variable (Identifier) or a raw number
       left: node.left.type === 'Identifier' ? node.left.name : (node.left.value ?? '?'), 
-      right: node.right.type === 'Identifier' ? node.right.name : (node.right.value ?? '?'),
+      right: rightVal, // Display the actual value (e.g., "0.0")
+      rightRaw: node.right.value, // Keep raw value for logic checks
       line: node.location?.start.line 
     });
   }
-  // Recursively check children
-  if (node.body) {
-    (Array.isArray(node.body) ? node.body : [node.body]).forEach((child: any) => extractMathOps(child, list));
-  }
+
+  // RECURSION: We must check EVERY child to find nested math
+  if (node.body) { (Array.isArray(node.body) ? node.body : [node.body]).forEach((child: any) => extractMathOps(child, list)); }
   if (node.left) extractMathOps(node.left, list);
   if (node.right) extractMathOps(node.right, list);
   if (node.condition) extractMathOps(node.condition, list);
   if (node.value) extractMathOps(node.value, list);
+  if (node.elseBody) extractMathOps(node.elseBody, list); 
+
   return list;
 };
 
@@ -143,7 +156,7 @@ function App() {
 
   while(x > 0) {
     result = x / y; // Math Check
-    x = x - 1;
+    x = x - 1/0.0;
   }
   return 0;
 }`);
@@ -160,10 +173,9 @@ function App() {
 
   // Refs for scrolling logic
   const textAreaRef = useRef<HTMLTextAreaElement>(null);
-  const lineNumbersRef = useRef<HTMLDivElement>(null); // NEW: Syncs line numbers
+  const lineNumbersRef = useRef<HTMLDivElement>(null); // Syncs line numbers
 
   // --- UI LOGIC: SYNC SCROLLING ---
-  // Keeps the line numbers aligned with the text area when scrolling
   const handleScroll = () => {
       if (textAreaRef.current && lineNumbersRef.current) {
           lineNumbersRef.current.scrollTop = textAreaRef.current.scrollTop;
@@ -366,16 +378,21 @@ function App() {
                   <table className="data-table">
                     <thead><tr><th>Line</th><th>Operation</th><th>Status</th></tr></thead>
                     <tbody>
-                      {mathOps.map((op, i) => (
-                        <tr key={i}>
-                          <td>{op.line}</td>
-                          <td>{op.left} {op.op} {op.right}</td>
-                          {/* Highlight UNSAFE operations in Red */}
-                          <td style={{color: op.right == 0 && op.op === '/' ? 'red' : '#4ec9b0'}}>
-                             {op.right == 0 && op.op === '/' ? '⚠️ UNSAFE' : '✅ SAFE'}
-                          </td>
-                        </tr>
-                      ))}
+                      {mathOps.map((op, i) => {
+                        // STRICT SAFETY CHECK FOR UI TABLE
+                        // Flags literal 0, string "0", or string "0.0" as UNSAFE
+                        const isZero = op.right == 0 || op.right === "0" || op.right === "0.0";
+                        const isUnsafe = op.op === '/' && isZero;
+                        return (
+                          <tr key={i}>
+                            <td>{op.line}</td>
+                            <td>{op.left} {op.op} {op.right}</td>
+                            <td style={{color: isUnsafe ? '#f44336' : '#4ec9b0', fontWeight: isUnsafe ? 'bold' : 'normal'}}>
+                               {isUnsafe ? '⚠️ UNSAFE' : '✅ SAFE'}
+                            </td>
+                          </tr>
+                        );
+                      })}
                     </tbody>
                   </table>
                 ) : <div>No math operations detected.</div>
